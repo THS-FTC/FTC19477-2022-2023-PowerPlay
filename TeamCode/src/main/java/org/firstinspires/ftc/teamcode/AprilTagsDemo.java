@@ -43,7 +43,6 @@ import org.openftc.apriltag.AprilTagDetectorJNI;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
-
 @TeleOp
 public class AprilTagsDemo extends LinearOpMode
 {
