@@ -42,7 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 
 import java.util.ArrayList;
-//edited #2
+
 @Autonomous
 public class justPark extends LinearOpMode
 {
@@ -57,12 +57,16 @@ public class justPark extends LinearOpMode
     double motor_reduction = 0.2;//for drivetrain
     //hardware classes + names
     Blinker Control_Hub;//NEEDED - DON'T DELETE!!
-    DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motor
+    DcMotorEx Motor_1;//front left
+    DcMotorEx Motor_2;//front right
+    DcMotorEx Motor_3;//back left
+    DcMotorEx Motor_4;//back right
+    DcMotorEx armMotor;
+    BNO055IMU imu;
     //Servo intakeServo;
     //CRServo wheelServo;
     //DistanceSensor frontDistance;
-    OpenCvWebcam camera;//for april tag
-    OpenCvWebcam webcam;//for pole detection
+    OpenCvWebcam camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
     static final double FEET_PER_METER = 3.28084;
@@ -97,6 +101,7 @@ public class justPark extends LinearOpMode
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "intakeCam"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+
         camera.setPipeline(aprilTagDetectionPipeline);
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
@@ -243,9 +248,9 @@ public class justPark extends LinearOpMode
                     x = detection.pose.x;
                     y = detection.pose.y;
                     z = detection.pose.z;
-                    //yaw = Math.toDegrees(detection.pose.yaw);
-                    //pitch = Math.toDegrees(detection.pose.pitch);
-                    //roll = Math.toDegrees(detection.pose.roll);
+                    yaw = Math.toDegrees(detection.pose.yaw);
+                    pitch = Math.toDegrees(detection.pose.pitch);
+                    roll = Math.toDegrees(detection.pose.roll);
                     /*telemetry.addLine(String.format("\nDetected tag ID=%d", tagID));
                     telemetry.addLine(String.format("Translation X: %.2f meters", x));
                     telemetry.addLine(String.format("Translation Y: %.2f meters", y));
