@@ -1,10 +1,5 @@
 package org.firstinspires.ftc.teamcode;
-
-<<<<<<< HEAD
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-
-=======
->>>>>>> b5f836d (Testing w/ Android Studio)
+//hi
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -20,11 +15,7 @@ import org.openftc.apriltag.AprilTagDetectorJNI;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
-<<<<<<< HEAD
-@Disabled
-=======
 
->>>>>>> b5f836d (Testing w/ Android Studio)
 class AprilTagDetectionPipeline extends OpenCvPipeline {
     private long nativeApriltagPtr;
     private Mat grey = new Mat();

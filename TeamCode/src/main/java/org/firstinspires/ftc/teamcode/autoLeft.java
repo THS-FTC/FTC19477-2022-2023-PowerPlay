@@ -41,7 +41,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
-
+//hi
 @Autonomous
 public class autoLeft extends LinearOpMode
 {

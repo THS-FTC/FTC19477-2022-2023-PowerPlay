@@ -42,7 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 
 import java.util.ArrayList;
-
+//hi
 @Autonomous
 public class autoRight extends LinearOpMode
 {
