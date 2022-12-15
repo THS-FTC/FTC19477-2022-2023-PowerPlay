@@ -11,7 +11,7 @@ Mechanical
 Electrical
 Computational
 Happiness
-//I am kai Song
+//I am kai Song helo
 */
 
 package org.firstinspires.ftc.teamcode;
