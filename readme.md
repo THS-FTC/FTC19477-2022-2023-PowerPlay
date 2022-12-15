@@ -1,4 +1,4 @@
-# THS FTC 2022-Present
+# THS FTC 2022-2023 PowerPlay
 Repo for both FTC 19477 and FTC 20848
 
 EasyOpenCV most used classes (javadocs): 
