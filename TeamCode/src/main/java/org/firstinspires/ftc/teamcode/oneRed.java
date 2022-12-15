@@ -13,7 +13,7 @@ Computational
 Happiness
 */
 //import FTC packages and all needed libraries for opencv, vuforia, etc
-//hiii12
+//hi
 package org.firstinspires.ftc.teamcode.vision;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;

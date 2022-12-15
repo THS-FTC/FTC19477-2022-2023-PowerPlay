@@ -20,7 +20,7 @@
  */
 
 package org.firstinspires.ftc.teamcode;
-
+//hi
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Blinker;
@@ -41,7 +41,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
-//hi1
+
 @Autonomous
 public class autoLeft extends LinearOpMode
 {
