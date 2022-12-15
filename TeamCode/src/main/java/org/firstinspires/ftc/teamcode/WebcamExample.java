@@ -1,7 +1,6 @@
 //import FTC packages and all needed libraries
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -26,10 +25,9 @@ import org.opencv.imgcodecs.Imgcodecs;
 import java.util.ArrayList;
 import java.util.List;
 
-//hi
 
-@TeleOp//set mode to TeleOp (driver control)\
-//@Disabled
+
+@TeleOp//set mode to TeleOp (driver control)
 public class WebcamExample extends LinearOpMode
 {
     //hardware definitions
@@ -226,8 +224,8 @@ public class WebcamExample extends LinearOpMode
                 Imgproc.cvtColor(input, mat, Imgproc.COLOR_RGB2HSV);//convert frame from RGB 2 HSV
                 //**IMPORTANT** - HSV color ranges (0-180, 0-255, 0-255)!!!
                 //for the HUE value, divide the 0-260 range by 2!!!
-                Scalar lowHSV = new Scalar(20, 80, 80); // lower bound HSV for red
-                Scalar highHSV = new Scalar(30, 255, 255); // higher bound HSV for red
+                Scalar lowHSV = new Scalar(150, 5, 5); // lower bound HSV for red
+                Scalar highHSV = new Scalar(180, 255, 255); // higher bound HSV for red
                 Mat thresh = new Mat();
 
                 // We'll get a black and white image. The white regions represent the regular stones.
@@ -266,8 +264,7 @@ public class WebcamExample extends LinearOpMode
                         centerColumn = (int) Math.round((double) (moments.get_m10() / moments.get_m00()));
                         //if a good contour is found, draw the contour onto the initial image, add a text line saying which camera we're looking at, and the contour's area
                         Imgproc.drawContours(input, contours, largestContour, new Scalar(0, 0, 255), 5);//draw the contour in the opposite color (blue cone --> red, red cone --> blue)
-                        //Imgproc.putText(input, String.format("Camera: intake cam. Area: %d", largestContourArea), textAnchor, Imgproc.FONT_HERSHEY_PLAIN, 2.0, green, 2);//print which camera it is and the contour area
-                        Imgproc.putText(input, String.format("Camera: intake cam. x: %d", centerColumn), textAnchor, Imgproc.FONT_HERSHEY_PLAIN, 2.0, green, 2);//print which camera it is and the contour area
+                        Imgproc.putText(input, String.format("Camera: intake cam. Area: %d", largestContourArea), textAnchor, Imgproc.FONT_HERSHEY_PLAIN, 2.0, green, 2);//print which camera it is and the contour area
                         //Mat finish = new Mat();
                         //telemetry.addData("center row: ", centerRow);
                         //telemetry.addData("center Column: ", centerColumn);

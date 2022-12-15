@@ -13,8 +13,8 @@ Computational
 Happiness
 */
 //import FTC packages and all needed libraries for opencv, vuforia, etc
-//hi
-package org.firstinspires.ftc.teamcode;
+
+package org.firstinspires.ftc.teamcode.vision;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -23,9 +23,9 @@ import com.qualcomm.robotcore.hardware.Light;
 import com.qualcomm.robotcore.hardware.CRServo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.Camera;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.Gyroscope;
@@ -49,71 +49,91 @@ import org.openftc.easyopencv.OpenCvWebcam;
 import org.opencv.core.Core;
 import org.opencv.core.MatOfPoint;
 import org.opencv.objdetect.QRCodeDetector;
+
+
 import java.util.ArrayList;
 import java.util.List;
+
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.concurrent.TimeUnit;
 import java.util.Date;
-import com.vuforia.Vuforia;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+//import com.vuforia.Vuforia;
+//import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 @TeleOp//set code mode to TeleOp (driver control)
 public class oneRed extends LinearOpMode {
     //junction height values represented as motor encoder values for GoBilda 117 rpm motor
-    //'final' means the variable cannot be changed later
     final int pickup = 3;
     final int groundJunction = 1025;
-    final int lowJunction = 1325;//4570
-    final int midJunction = 2135;//7700
-    final int highJunction = 2850;//10500
-    final int slideClearance = 720;
-    final float servoPole = 0.0F;
-    final float servoPick = 213.0F;
-    final float clawOpen = 69.0F;
-    final float clawClose = 105.0F;
-    double slideSpeed = 2787.0;//2787.625 PP/S is max encoder PP/S of Gobilda 435 rpm motor
+    final int lowJunction = 2215;//4570
+    final int midJunction = 3870;//7700
+    final int highJunction = 5575;//10500
+    final int slideClearance = 3000;
+    final float servoPole = 170.0F;
+    final float servoPick = 0.0F;
+    double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
-    //float intakeServoTarget;
-    boolean claw = false;//TRUE = closed; FALSE = open (starting position)
-    boolean intake = false;//TRUE = pole position; FALSE = pickup (starting position)
     double minContourArea = 2500.0;//minimum area that a contour is counted as a "cone" and not useless
     //center coordinates have TOP LEFT corner as (0,0) - used for openCv contour center
-    int centerColumn = 0;//"x" axis
-    int centerRow = 0;//"y" axis
-
-    private ElapsedTime clawTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize clawTime Variable with millisecond unit
-    private ElapsedTime intakeTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize intakeTime Variable with millisecond unit
-    private ElapsedTime cycleTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize intakeTime Variable with millisecond unit
-
-    //ALL TIMES ARE IN MILLISECONDS
-
-    //motor variables for mecanum drive
-    double motor_reduction = 0.55;//for drivetrain
-    double motor_1_pwr, motor_2_pwr, motor_3_pwr, motor_4_pwr = 0.0;//declare motor power variables
-    double harrisonDirection = -1.0;
-    double motor_denom;
-
-    int armPos;
-
+    int centerColumn = 0;//"x"
+    int centerRow = 0;//"y"
     //PID variables
     double previousTime;
     double lastError = 0;
-
     //hardware classes + names
     Blinker Control_Hub;//NEEDED - DON'T DELETE!!
-    DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motors
-    ServoImplEx intakeServo, clawServo;//declare servos
-    //Gyroscope imu;
-    //USE SERVOIMPLEX (GM0)
+    DcMotorEx Motor_1;//front left
+    DcMotorEx Motor_2;//front right
+    DcMotorEx Motor_3;//back left
+    DcMotorEx Motor_4;//back right
+    DcMotorEx armMotor;
+    Gyroscope imu;
+    Servo intakeServo;//USE SERVOIMPLEX - refer to GM0
+    Servo wheelServo;
     DistanceSensor frontDistance;
-    //OpenCvWebcam webcam;
+    OpenCvWebcam webcam;
 
+    private ElapsedTime runTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize runTime Variable with millisecond unit
+    //ALL TIMES ARE IN MILLISECONDS
+
+    //motor variables for mecanum drive
+    double motor_reduction = 0.35;//for drivetrain
+    double motor_1_pwr = 0.0;
+    double motor_2_pwr = 0.0;
+    double motor_3_pwr = 0.0;
+    double motor_4_pwr = 0.0;
+    double motor_denom;
     //inputs from controllers
-    double left_stick2_x, left_stick2_y, right_stick2_x, right_stick2_y, left_stick1_y, right_stick1_x, left_stick1_x, right_stick1_y,
-            left_trig1, right_trig1, left_trig2, right_trig2;//declare triggers and bumpers
-    boolean a1, b1, x1, y1, right_bump2, left_bump2, left_bump1, right_bump1, a2, b2, x2, y2, Dleft2, Dright2, Dup2, Ddown2, Dup1, Ddown1, Dleft1, Dright1;//declare a,b,x,y, Dpad, bumpers buttons
+    double left_stick2_x;//triggers and bumpers
+    double left_stick2_y;
+    double right_stick2_x;
+    double left_stick1_y;
+    double right_stick1_x;
+    double left_stick1_x;
+    boolean left_bump1;
+    boolean right_bump1;
+    boolean left_bump2;
+    boolean right_bump2;
+    double left_trig1;
+    double right_trig1;
+    double left_trig2;
+    double right_trig2;
+    boolean a1;//a,b,x,y buttons
+    boolean b1;
+    boolean x1;
+    boolean y1;
+    boolean a2;
+    boolean b2;
+    boolean x2;
+    boolean Dleft2;
+    boolean Dright2;
+    boolean Dup1;
+    boolean Ddown1;
+    boolean Dleft1;
+    boolean Dright1;
+    boolean y2;
 
     @Override
     public void runOpMode() {
@@ -124,19 +144,15 @@ public class oneRed extends LinearOpMode {
         Motor_3 = hardwareMap.get(DcMotorEx.class, "Motor_3");
         Motor_4 = hardwareMap.get(DcMotorEx.class, "Motor_4");
         armMotor = hardwareMap.get(DcMotorEx.class, "armMotor");
-        intakeServo = hardwareMap.get(ServoImplEx.class, "intakeServo");//to move the claw, grab the cone.
-        clawServo = hardwareMap.get(ServoImplEx.class, "clawServo");
+        intakeServo = hardwareMap.get(Servo.class, "intakeServo");//to move the claw, grab the cone.
+        wheelServo = hardwareMap.get(Servo.class, "wheelServo");
         frontDistance = hardwareMap.get(DistanceSensor.class, "frontDistance");
-
         //setting hardware directions, etc
         Motor_1.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_3.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_2.setDirection(DcMotorEx.Direction.FORWARD);
         Motor_4.setDirection(DcMotorEx.Direction.FORWARD);
-        armMotor.setDirection(DcMotorEx.Direction.REVERSE);
-        //set Servo maxRange [500, 2500] microseconds. Enables goBilda servos to get full 300º range
-        intakeServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
-        clawServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
+        armMotor.setDirection(DcMotorEx.Direction.FORWARD);
         //should reset encoder values to 0
         Motor_1.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         Motor_2.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -147,11 +163,10 @@ public class oneRed extends LinearOpMode {
         armMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         //telemetry.addData("armEncoder", armMotor.getCurrentPosition());
         //telemetry.addData("intake servo", intakeServo.getPosition());
-        clawServo.setPosition(clawOpen/300.0);//"open" the claw servo
-        intakeServo.setPosition(servoPick/300.0);
+        intakeServo.setPosition(servoPole/270.0);//"zero" the intake servo
 
         //initialize webcams
-        /*int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "intakeCam"), cameraMonitorViewId);
         webcam.setPipeline(new conePipeline());//tell the camera which image processing pipeline to send images to
         webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
@@ -176,7 +191,7 @@ public class oneRed extends LinearOpMode {
                  * For a rear facing camera or a webcam, rotation is defined assuming the camera is facing
                  * away from the user.
                  */
-             /*   webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);//start getting frames from the camera
+                webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);//start getting frames from the camera
             }
 
             @Override
@@ -185,42 +200,22 @@ public class oneRed extends LinearOpMode {
                 /*
                  * This will be called if the camera could not be opened
                  */
-            //}
-        //});
-        slide(30);//move up slightly cuz there's a weird bug somewhere
+            }
+        });
+        slide(20);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        cycleTime.reset();
         waitForStart();
 
         //main loop: call functions that do different tasks
         while (opModeIsActive()) {
-            armPos = armMotor.getCurrentPosition();
-            normal_motor();////mecanum wheel motor control maths using encoder velocity control
+            normal_motor();//mecanum wheel drive
             getCone();//operate the slide to preset positions and rotate the intake
             //cam();//camera statistics
-            right_bump2 = this.gamepad2.right_bumper;//right bumper: for the claw servo
-            if (right_bump2) {
-                if (clawTime.time() > 1000) {
-                    claw();//operate the claw
-                    clawTime.reset();
-                }
-            }
-            left_bump2 = this.gamepad2.left_bumper;//left bumper: for the intake servo
-            if (left_bump2){
-                if (intakeTime.time() > 1000){
-                    intake();//operate the intake servo
-                    intakeTime.reset();
-                }
-            }
-
-
-            //telemetry.addData("arm", armMotor.getCurrentPosition());
-            telemetry.addData("slide height: ", armPos);
-            telemetry.addData("cycle time: ", cycleTime.time());
+            claw();//operate the claw
+            telemetry.addData("arm", armMotor.getCurrentPosition());
             telemetry.update();//send telemetry data to driver hub
             //DO NOT PUT A TELEMETRY UPDATE IN ANY OTHER FUNCTION PLEASE MAY GOD HELP YOU IF YOU DO
-            cycleTime.reset();
         }
     }
 
@@ -229,8 +224,10 @@ public class oneRed extends LinearOpMode {
     //all custom functions
     void getCone(){
         //read controller inputs
-        left_trig2 = this.gamepad2.left_trigger;//slide down
-        right_trig2 = this.gamepad2.right_trigger;//slide up
+        left_trig2 = this.gamepad2.left_trigger;
+        right_trig2 = this.gamepad2.right_trigger;
+        Dleft2 = this.gamepad2.dpad_left;
+        Dright2 = this.gamepad2.dpad_right;
         x2 = this.gamepad2.x;
         a2 = this.gamepad2.a;
         b2 = this.gamepad2.b;
@@ -248,54 +245,33 @@ public class oneRed extends LinearOpMode {
                 slide(armTarget);
             }
         }
-        //spin the servo to the right position as slide is going to preset position
-        /*if ((armMotor.getCurrentPosition() >= slideClearance) & (intakeServo.getPosition() != (intakeServoTarget/300.0))){
-            intakeServo.setPosition(intakeServoTarget/300.0);
-        }*/
-
         //execute preset slide heights if the buttons are pressed
         if (x2){
-            armTarget = pickup;//armTarget needs to be re-defined as well, even tho not used, to make sure the manual triggers match with the current slide height.
             slide(pickup);
-            //intakeServoTarget = servoPick;
         }
         else if(a2){
-            armTarget = lowJunction;
             slide(lowJunction);
-            //intakeServoTarget = servoPole;
         }
         else if(b2){
-            armTarget = midJunction;
             slide(midJunction);
-            //intakeServoTarget = servoPole;
         }
         else if(y2){
-            armTarget = highJunction;
             slide(highJunction);
-            //intakeServoTarget = servoPole;
+        }
+        //turn the intake servo 180 deg
+        if(Dleft2){
+            intake(0);
+        }
+        else if (Dright2){
+            intake(1);
         }
     }
 
-    void normal_motor(){//IT WORKS!
+    void normal_motor(){//mecanum wheel motor control maths + telemetry
         //read controller inputs
         right_stick1_x = -this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
         left_stick1_y = -this.gamepad1.left_stick_y;
-        right_bump1 = this.gamepad1.right_bumper;
-
-        if(right_bump1){
-            harrisonDirection = 1.0;
-        }
-        else{
-            harrisonDirection = -1.0;
-        }
-
-        if (armPos >= midJunction){
-            motor_reduction = 0.35;
-        }
-        else{
-            motor_reduction = 0.7;
-        }
 
         //drivetrain (somewhere you can learn more about the math to control the mecanum wheels - GOOGLE IT! IDK)
         motor_denom = Math.max(Math.abs(left_stick1_y) + Math.abs(left_stick1_x) + Math.abs(right_stick1_x), 1.0);
@@ -303,10 +279,10 @@ public class oneRed extends LinearOpMode {
         motor_2_pwr = (left_stick1_y - left_stick1_x - right_stick1_x)/motor_denom;//RF
         motor_3_pwr = (left_stick1_y - left_stick1_x + right_stick1_x)/motor_denom;//LB
         motor_4_pwr = (left_stick1_y + left_stick1_x - right_stick1_x)/motor_denom;//LR
-        Motor_1.setVelocity(motor_1_pwr * driveSpeed * motor_reduction * harrisonDirection);//use setVelocity not setPower to use the encoder and run the robot with velocity (more accurate!!!)
-        Motor_2.setVelocity(motor_2_pwr * driveSpeed * motor_reduction * harrisonDirection);
-        Motor_3.setVelocity(motor_3_pwr * driveSpeed * motor_reduction * harrisonDirection);
-        Motor_4.setVelocity(motor_4_pwr * driveSpeed * motor_reduction * harrisonDirection);
+        Motor_1.setVelocity(motor_1_pwr * driveSpeed * motor_reduction * -1.0);//use setVelocity not setPower to use the encoder and run the robot with velocity (more accurate!!!)
+        Motor_2.setVelocity(motor_2_pwr * driveSpeed * motor_reduction * -1.0);
+        Motor_3.setVelocity(motor_3_pwr * driveSpeed * motor_reduction * -1.0);
+        Motor_4.setVelocity(motor_4_pwr * driveSpeed * motor_reduction * -1.0);
         Motor_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//use these statements to run using encoder - NEEDED
         Motor_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Motor_3.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -314,48 +290,46 @@ public class oneRed extends LinearOpMode {
     }
 
     void claw(){//open/close claw
-        //right_bump2 = this.gamepad2.right_bumper;//right bumper: for the claw servo
-        double clawPos = clawServo.getPosition();
-        if(right_bump2 && (clawPos*300.0 <= (clawOpen+1.0) || clawPos*300.0 >= (clawClose-1.0))) {
-            if (claw) {
-                clawServo.setPosition(clawOpen / 300.0);
-                claw = false;
-            } else if (!claw) {
-                clawServo.setPosition(clawClose / 300.0);
-                claw = true;
-            }
-        }
-        telemetry.addData("clawServo: ", clawPos);
+        right_bump2 = this.gamepad2.right_bumper;
+        left_bump2 = this.gamepad2.left_bumper;
 
+        if(right_bump2){
+            wheelServo.setPosition(50.0/270.0);
+        }
+        else if(left_bump2){
+            wheelServo.setPosition(0.0/270.0);
+        }
+        /*else{
+            wheelServo.setPower(-0.1);
+        }*/
     }
 
     void slide(int target){//make slide move up/down using encoder values to calculate position
         armMotor.setTargetPosition(target);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setVelocity(slideSpeed);
+        if(armTarget<armMotor.getCurrentPosition()){
+            armMotor.setVelocity(slideSpeed*0.75);
+        }
+        else if (armTarget>armMotor.getCurrentPosition()){
+            armMotor.setVelocity(slideSpeed*0.9);
+        }
     }
 
-    void intake(){//turn the entire intake mechanism around 180 degrees
-        if (left_bump2) {
-            double intakePos = intakeServo.getPosition();
-            if (armPos >= slideClearance && (intakePos*300.0 <= (servoPole+1.0) || intakePos*300.0 >= (servoPick-1.0))) {//EVERYTHING GOOD
-                if (intake) {
-                    intakeServo.setPosition(servoPole / 300.0);
-                    intake = false;
-                }
-                else if (!intake) {
-                    intakeServo.setPosition(servoPick / 300.0);
-                    intake = true;
-                }
-                /*else if (pos == 2){
-                    slide(slideClearance);
-                    intakeServo.setPosition(servoPole/300.0);
-                }*/
+    void intake(int pos){//turn the entire intake mechanism around 180 degrees
+        if (armMotor.getCurrentPosition() >= slideClearance){//EVERYTHING GOOD
+            if(pos == 0){
+                intakeServo.setPosition(servoPole/270.0);
             }
-            else {
-                armTarget = slideClearance;
+            else if (pos == 1){
+                intakeServo.setPosition(servoPick/270.0);
+            }
+            else if (pos == 2){
                 slide(slideClearance);
+                intakeServo.setPosition(servoPole/270.0);
             }
+        }
+        else if (Dleft2 || Dright2){
+            slide(slideClearance + 25);
         }
     }
 
@@ -404,7 +378,7 @@ public class oneRed extends LinearOpMode {
         Motor_4.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    /*void cam(){
+    void cam(){
         telemetry.addData("Frame Count", webcam.getFrameCount());
         telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
         telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -435,9 +409,9 @@ public class oneRed extends LinearOpMode {
             //webcam.stopStreaming();
             //webcam.closeCameraDevice();
         //}
-    //}*/
+    }
 
-    /*double computePID(double input, double setPoint, int kp, int ki, int kd){
+    double computePID(double input, double setPoint, int kp, int ki, int kd){
         double currentTime = runTime.milliseconds();//get current time in MILLISECONDS
         double error;
         double cumError = 0;
@@ -455,9 +429,9 @@ public class oneRed extends LinearOpMode {
         previousTime = currentTime;                        //remember current time
 
         return out;                                        //have function return the PID output
-    }*/
+    }
 
-    /*double computePD(double input, double setPoint, int kp, int kd){
+    double computePD(double input, double setPoint, int kp, int kd){
         double currentTime = runTime.milliseconds();//get current time in MILLISECONDS
         double error;
         double cumError = 0;
@@ -474,7 +448,7 @@ public class oneRed extends LinearOpMode {
         previousTime = currentTime;                        //remember current time
 
         return out;                                        //have function return the PID output
-    }*/
+    }
 
     //cone detection processing pipeline
     class conePipeline extends OpenCvPipeline
@@ -562,7 +536,7 @@ public class oneRed extends LinearOpMode {
 
         }
 
-        /*@Override
+        @Override
         public void onViewportTapped()
         {
             /*
@@ -576,7 +550,7 @@ public class oneRed extends LinearOpMode {
              *
              * Here we demonstrate dynamically pausing/resuming the viewport when the user taps it
              */
-            /*viewportPaused = !viewportPaused;
+            viewportPaused = !viewportPaused;
 
             if(viewportPaused)
             {
@@ -585,8 +559,8 @@ public class oneRed extends LinearOpMode {
             else
             {
                 webcam.resumeViewport();
-            }*/
-        //}
+            }
+        }
     }
 }
 
