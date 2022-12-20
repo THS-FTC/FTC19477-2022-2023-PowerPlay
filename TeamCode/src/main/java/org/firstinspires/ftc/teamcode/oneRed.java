@@ -14,7 +14,7 @@ Happiness
 */
 //import FTC packages and all needed libraries for opencv, vuforia, etc
 //hi
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -23,9 +23,9 @@ import com.qualcomm.robotcore.hardware.Light;
 import com.qualcomm.robotcore.hardware.CRServo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.Camera;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.Gyroscope;
@@ -49,21 +49,19 @@ import org.openftc.easyopencv.OpenCvWebcam;
 import org.opencv.core.Core;
 import org.opencv.core.MatOfPoint;
 import org.opencv.objdetect.QRCodeDetector;
-
-
 import java.util.ArrayList;
 import java.util.List;
-
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.concurrent.TimeUnit;
 import java.util.Date;
-//import com.vuforia.Vuforia;
-//import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import com.vuforia.Vuforia;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 @TeleOp//set code mode to TeleOp (driver control)
 public class oneRed extends LinearOpMode {
     //junction height values represented as motor encoder values for GoBilda 117 rpm motor
+    //'final' means the variable cannot be changed later
     final int pickup = 3;
     final int groundJunction = 1025;
     final int lowJunction = 2215;//4570
@@ -75,65 +73,37 @@ public class oneRed extends LinearOpMode {
     double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
+    float intakeServoTarget;
     double minContourArea = 2500.0;//minimum area that a contour is counted as a "cone" and not useless
     //center coordinates have TOP LEFT corner as (0,0) - used for openCv contour center
-    int centerColumn = 0;//"x"
-    int centerRow = 0;//"y"
-    //PID variables
-    double previousTime;
-    double lastError = 0;
-    //hardware classes + names
-    Blinker Control_Hub;//NEEDED - DON'T DELETE!!
-    DcMotorEx Motor_1;//front left
-    DcMotorEx Motor_2;//front right
-    DcMotorEx Motor_3;//back left
-    DcMotorEx Motor_4;//back right
-    DcMotorEx armMotor;
-    Gyroscope imu;
-    Servo intakeServo;//USE SERVOIMPLEX - refer to GM0
-    Servo wheelServo;
-    DistanceSensor frontDistance;
-    OpenCvWebcam webcam;
+    int centerColumn = 0;//"x" axis
+    int centerRow = 0;//"y" axis
 
     private ElapsedTime runTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize runTime Variable with millisecond unit
     //ALL TIMES ARE IN MILLISECONDS
 
     //motor variables for mecanum drive
     double motor_reduction = 0.35;//for drivetrain
-    double motor_1_pwr = 0.0;
-    double motor_2_pwr = 0.0;
-    double motor_3_pwr = 0.0;
-    double motor_4_pwr = 0.0;
+    double motor_1_pwr, motor_2_pwr, motor_3_pwr, motor_4_pwr = 0.0;//declare motor power variables
     double motor_denom;
+
+    //PID variables
+    double previousTime;
+    double lastError = 0;
+
+    //hardware classes + names
+    Blinker Control_Hub;//NEEDED - DON'T DELETE!!
+    DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motors
+    ServoImplEx intakeServo, clawServo;//declare servos
+    Gyroscope imu;
+    //USE SERVOIMPLEX (GM0)
+    DistanceSensor frontDistance;
+    OpenCvWebcam webcam;
+
     //inputs from controllers
-    double left_stick2_x;//triggers and bumpers
-    double left_stick2_y;
-    double right_stick2_x;
-    double left_stick1_y;
-    double right_stick1_x;
-    double left_stick1_x;
-    boolean left_bump1;
-    boolean right_bump1;
-    boolean left_bump2;
-    boolean right_bump2;
-    double left_trig1;
-    double right_trig1;
-    double left_trig2;
-    double right_trig2;
-    boolean a1;//a,b,x,y buttons
-    boolean b1;
-    boolean x1;
-    boolean y1;
-    boolean a2;
-    boolean b2;
-    boolean x2;
-    boolean Dleft2;
-    boolean Dright2;
-    boolean Dup1;
-    boolean Ddown1;
-    boolean Dleft1;
-    boolean Dright1;
-    boolean y2;
+    double left_stick2_x, left_stick2_y, right_stick2_x, right_stick2_y, left_stick1_y, right_stick1_x, left_stick1_x, right_stick1_y,
+            left_trig1, right_trig1, left_trig2, right_trig2;//declare triggers and bumpers
+    boolean a1, b1, x1, y1, right_bump2, left_bump2, left_bump1, right_bump1, a2, b2, x2, y2, Dleft2, Dright2, Dup2, Ddown2, Dup1, Ddown1, Dleft1, Dright1;//declare a,b,x,y, Dpad, bumpers buttons
 
     @Override
     public void runOpMode() {
@@ -144,15 +114,19 @@ public class oneRed extends LinearOpMode {
         Motor_3 = hardwareMap.get(DcMotorEx.class, "Motor_3");
         Motor_4 = hardwareMap.get(DcMotorEx.class, "Motor_4");
         armMotor = hardwareMap.get(DcMotorEx.class, "armMotor");
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo");//to move the claw, grab the cone.
-        wheelServo = hardwareMap.get(Servo.class, "wheelServo");
+        intakeServo = hardwareMap.get(ServoImplEx.class, "intakeServo");//to move the claw, grab the cone.
+        clawServo = hardwareMap.get(ServoImplEx.class, "clawServo");
         frontDistance = hardwareMap.get(DistanceSensor.class, "frontDistance");
+
         //setting hardware directions, etc
         Motor_1.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_3.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_2.setDirection(DcMotorEx.Direction.FORWARD);
         Motor_4.setDirection(DcMotorEx.Direction.FORWARD);
         armMotor.setDirection(DcMotorEx.Direction.FORWARD);
+        //set Servo maxRange [500, 2500] microseconds. Enables goBilda servos to get full 300º range
+        intakeServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
+        clawServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
         //should reset encoder values to 0
         Motor_1.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         Motor_2.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -163,7 +137,7 @@ public class oneRed extends LinearOpMode {
         armMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         //telemetry.addData("armEncoder", armMotor.getCurrentPosition());
         //telemetry.addData("intake servo", intakeServo.getPosition());
-        intakeServo.setPosition(servoPole/270.0);//"zero" the intake servo
+        intakeServo.setPosition(servoPole/300.0);//"zero" the intake servo
 
         //initialize webcams
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -209,7 +183,7 @@ public class oneRed extends LinearOpMode {
 
         //main loop: call functions that do different tasks
         while (opModeIsActive()) {
-            normal_motor();//mecanum wheel drive
+            normal_motor();////mecanum wheel motor control maths using encoder velocity control
             getCone();//operate the slide to preset positions and rotate the intake
             //cam();//camera statistics
             claw();//operate the claw
@@ -226,8 +200,8 @@ public class oneRed extends LinearOpMode {
         //read controller inputs
         left_trig2 = this.gamepad2.left_trigger;
         right_trig2 = this.gamepad2.right_trigger;
-        Dleft2 = this.gamepad2.dpad_left;
-        Dright2 = this.gamepad2.dpad_right;
+        Dup2 = this.gamepad2.dpad_up;
+        Ddown2 = this.gamepad2.dpad_down;
         x2 = this.gamepad2.x;
         a2 = this.gamepad2.a;
         b2 = this.gamepad2.b;
@@ -245,29 +219,38 @@ public class oneRed extends LinearOpMode {
                 slide(armTarget);
             }
         }
+        //spin the servo to the right position as slide is going to preset position
+        if ((armMotor.getCurrentPosition() >= slideClearance) & (intakeServo.getPosition() != (intakeServoTarget/300.0))){
+            intakeServo.setPosition(intakeServoTarget/300.0);
+        }
+
         //execute preset slide heights if the buttons are pressed
         if (x2){
             slide(pickup);
+            intakeServoTarget = servoPick;
         }
         else if(a2){
             slide(lowJunction);
+            //intakeServoTarget = servoPole;
         }
         else if(b2){
             slide(midJunction);
+            intakeServoTarget = servoPole;
         }
         else if(y2){
             slide(highJunction);
+            intakeServoTarget = servoPole;
         }
         //turn the intake servo 180 deg
-        if(Dleft2){
+        if(Dup2){
             intake(0);
         }
-        else if (Dright2){
+        else if (Ddown2){
             intake(1);
         }
     }
 
-    void normal_motor(){//mecanum wheel motor control maths + telemetry
+    void normal_motor(){
         //read controller inputs
         right_stick1_x = -this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
@@ -294,14 +277,11 @@ public class oneRed extends LinearOpMode {
         left_bump2 = this.gamepad2.left_bumper;
 
         if(right_bump2){
-            wheelServo.setPosition(50.0/270.0);
+            clawServo.setPosition(50.0/300.0);
         }
         else if(left_bump2){
-            wheelServo.setPosition(0.0/270.0);
+            clawServo.setPosition(0.0/300.0);
         }
-        /*else{
-            wheelServo.setPower(-0.1);
-        }*/
     }
 
     void slide(int target){//make slide move up/down using encoder values to calculate position
@@ -317,19 +297,19 @@ public class oneRed extends LinearOpMode {
 
     void intake(int pos){//turn the entire intake mechanism around 180 degrees
         if (armMotor.getCurrentPosition() >= slideClearance){//EVERYTHING GOOD
-            if(pos == 0){
-                intakeServo.setPosition(servoPole/270.0);
+            if(pos == 1){
+                intakeServo.setPosition(servoPole/300.0);
             }
-            else if (pos == 1){
-                intakeServo.setPosition(servoPick/270.0);
+            else if (pos == 0){
+                intakeServo.setPosition(servoPick/300.0);
             }
-            else if (pos == 2){
+            /*else if (pos == 2){
                 slide(slideClearance);
-                intakeServo.setPosition(servoPole/270.0);
-            }
+                intakeServo.setPosition(servoPole/300.0);
+            }*/
         }
-        else if (Dleft2 || Dright2){
-            slide(slideClearance + 25);
+        else{
+            slide(slideClearance);
         }
     }
 
