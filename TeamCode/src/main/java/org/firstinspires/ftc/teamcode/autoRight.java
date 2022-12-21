@@ -57,11 +57,7 @@ public class autoRight extends LinearOpMode
     double motor_reduction = 0.2;//for drivetrain
     //hardware classes + names
     Blinker Control_Hub;//NEEDED - DON'T DELETE!!
-    DcMotorEx Motor_1;//front left
-    DcMotorEx Motor_2;//front right
-    DcMotorEx Motor_3;//back left
-    DcMotorEx Motor_4;//back right
-    DcMotorEx armMotor;
+    DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motors
     BNO055IMU imu;
     //Servo intakeServo;
     //CRServo wheelServo;
