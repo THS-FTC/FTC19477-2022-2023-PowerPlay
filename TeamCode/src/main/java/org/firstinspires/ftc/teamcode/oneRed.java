@@ -68,8 +68,8 @@ public class oneRed extends LinearOpMode {
     final int midJunction = 3870;//7700
     final int highJunction = 5575;//10500
     final int slideClearance = 3000;
-    final float servoPole = 170.0F;
-    final float servoPick = 0.0F;
+    final float servoPole = 0.0F;
+    final float servoPick = 300.0F;
     double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
@@ -123,7 +123,7 @@ public class oneRed extends LinearOpMode {
         Motor_3.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_2.setDirection(DcMotorEx.Direction.FORWARD);
         Motor_4.setDirection(DcMotorEx.Direction.FORWARD);
-        armMotor.setDirection(DcMotorEx.Direction.FORWARD);
+        armMotor.setDirection(DcMotorEx.Direction.REVERSE);
         //set Servo maxRange [500, 2500] microseconds. Enables goBilda servos to get full 300º range
         intakeServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
         clawServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
@@ -137,7 +137,7 @@ public class oneRed extends LinearOpMode {
         armMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         //telemetry.addData("armEncoder", armMotor.getCurrentPosition());
         //telemetry.addData("intake servo", intakeServo.getPosition());
-        intakeServo.setPosition(servoPole/300.0);//"zero" the intake servo
+        intakeServo.setPosition(servoPick/300.0);//"zero" the intake servo
 
         //initialize webcams
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -178,6 +178,7 @@ public class oneRed extends LinearOpMode {
         });
         slide(20);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
+        telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
         telemetry.update();
         waitForStart();
 
@@ -277,10 +278,10 @@ public class oneRed extends LinearOpMode {
         left_bump2 = this.gamepad2.left_bumper;
 
         if(right_bump2){
-            clawServo.setPosition(50.0/300.0);
+            clawServo.setPosition(90.0/300.0);
         }
         else if(left_bump2){
-            clawServo.setPosition(0.0/300.0);
+            clawServo.setPosition(50.0/300.0);
         }
     }
 

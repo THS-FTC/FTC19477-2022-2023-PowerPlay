@@ -57,8 +57,7 @@ public class justPark extends LinearOpMode
     double motor_reduction = 0.2;//for drivetrain
     //hardware classes + names
     Blinker Control_Hub;//NEEDED - DON'T DELETE!!
-    DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motors
-    BNO055IMU imu;
+    DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motor
     //Servo intakeServo;
     //CRServo wheelServo;
     //DistanceSensor frontDistance;
