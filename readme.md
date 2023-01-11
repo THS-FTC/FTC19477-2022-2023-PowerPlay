@@ -1,5 +1,8 @@
-# THS FTC 2022-2023 PowerPlay
-Repo for both FTC 19477 and FTC 20848
+#FTC19477 2022-2023 PowerPlay
+Repo for both FTC 19477
+
+Rules:
+  When uploading code, put your name as the first word in the commit message. This is to keep a record of who changed what. Put a brief summary of what you changed.
 
 EasyOpenCV most used classes (javadocs): 
   https://docs.opencv.org/4.x/javadoc/org/opencv/imgproc/Imgproc.html
