@@ -84,6 +84,7 @@ public class oneRed extends LinearOpMode {
 
     //motor variables for mecanum drive
     double motor_reduction = 0.35;//for drivetrain
+    double harrisonDirection = 1.0; //if positive, motors are "forward". if negative, motors are "backwards". let harrison figure out the directions I can't :((
     double motor_1_pwr, motor_2_pwr, motor_3_pwr, motor_4_pwr = 0.0;//declare motor power variables
     double motor_denom;
 
@@ -122,7 +123,7 @@ public class oneRed extends LinearOpMode {
         Motor_1.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_3.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_2.setDirection(DcMotorEx.Direction.FORWARD);
-        Motor_4.setDirection(DcMotorEx.Direction.FORWARD);
+        Motor_4.setDirection(DcMotorEx.Direction.REVERSE);
         armMotor.setDirection(DcMotorEx.Direction.REVERSE);
         //set Servo maxRange [500, 2500] microseconds. Enables goBilda servos to get full 300º range
         intakeServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
@@ -179,6 +180,7 @@ public class oneRed extends LinearOpMode {
         slide(20);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
         telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
+        telemetry.addData("harrison direction: ", harrisonDirection);
         telemetry.update();
         waitForStart();
 
@@ -251,22 +253,26 @@ public class oneRed extends LinearOpMode {
         }
     }
 
-    void normal_motor(){
+    void normal_motor(){//rest please help
         //read controller inputs
         right_stick1_x = -this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
         left_stick1_y = -this.gamepad1.left_stick_y;
+        right_bump1 = this.gamepad1.right_bumper;
 
+        if (right_bump1){//harrisonDirection mapped to drive controller right bumper
+            harrisonDirection = harrisonDirection * -1.0;
+        }
         //drivetrain (somewhere you can learn more about the math to control the mecanum wheels - GOOGLE IT! IDK)
         motor_denom = Math.max(Math.abs(left_stick1_y) + Math.abs(left_stick1_x) + Math.abs(right_stick1_x), 1.0);
         motor_1_pwr = (left_stick1_y + left_stick1_x + right_stick1_x)/motor_denom;//LF
         motor_2_pwr = (left_stick1_y - left_stick1_x - right_stick1_x)/motor_denom;//RF
         motor_3_pwr = (left_stick1_y - left_stick1_x + right_stick1_x)/motor_denom;//LB
         motor_4_pwr = (left_stick1_y + left_stick1_x - right_stick1_x)/motor_denom;//LR
-        Motor_1.setVelocity(motor_1_pwr * driveSpeed * motor_reduction * -1.0);//use setVelocity not setPower to use the encoder and run the robot with velocity (more accurate!!!)
-        Motor_2.setVelocity(motor_2_pwr * driveSpeed * motor_reduction * -1.0);
-        Motor_3.setVelocity(motor_3_pwr * driveSpeed * motor_reduction * -1.0);
-        Motor_4.setVelocity(motor_4_pwr * driveSpeed * motor_reduction * -1.0);
+        Motor_1.setVelocity(motor_1_pwr * driveSpeed * motor_reduction * harrisonDirection);//use setVelocity not setPower to use the encoder and run the robot with velocity (more accurate!!!)
+        Motor_2.setVelocity(motor_2_pwr * driveSpeed * motor_reduction * harrisonDirection) ;
+        Motor_3.setVelocity(motor_3_pwr * driveSpeed * motor_reduction * harrisonDirection);
+        Motor_4.setVelocity(motor_4_pwr * driveSpeed * motor_reduction * harrisonDirection);
         Motor_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//use these statements to run using encoder - NEEDED
         Motor_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Motor_3.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
