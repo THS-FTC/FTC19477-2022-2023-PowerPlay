@@ -251,7 +251,7 @@ public class oneRed extends LinearOpMode {
         }
     }
 
-    void normal_motor(){//rest please help it's not working
+    void normal_motor(){//rest please help it's not working!
         //read controller inputs
         right_stick1_x = -this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
