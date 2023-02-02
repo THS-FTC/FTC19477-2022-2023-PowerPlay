@@ -85,6 +85,7 @@ public class oneRed extends LinearOpMode {
     //motor variables for mecanum drive
     double motor_reduction = 0.35;//for drivetrain
     double motor_1_pwr, motor_2_pwr, motor_3_pwr, motor_4_pwr = 0.0;//declare motor power variables
+    double harrisonDirection = 1.0;
     double motor_denom;
 
     //PID variables
@@ -256,6 +257,11 @@ public class oneRed extends LinearOpMode {
         right_stick1_x = -this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
         left_stick1_y = -this.gamepad1.left_stick_y;
+        right_bump1 = this.gamepad1.right_bumper;
+
+        if(right_bump1){
+            harrisonDirection = harrisonDirection * -1.0;
+        }
 
         //drivetrain (somewhere you can learn more about the math to control the mecanum wheels - GOOGLE IT! IDK)
         motor_denom = Math.max(Math.abs(left_stick1_y) + Math.abs(left_stick1_x) + Math.abs(right_stick1_x), 1.0);
@@ -263,10 +269,10 @@ public class oneRed extends LinearOpMode {
         motor_2_pwr = (left_stick1_y - left_stick1_x - right_stick1_x)/motor_denom;//RF
         motor_3_pwr = (left_stick1_y - left_stick1_x + right_stick1_x)/motor_denom;//LB
         motor_4_pwr = (left_stick1_y + left_stick1_x - right_stick1_x)/motor_denom;//LR
-        Motor_1.setVelocity(motor_1_pwr * driveSpeed * motor_reduction * -1.0);//use setVelocity not setPower to use the encoder and run the robot with velocity (more accurate!!!)
-        Motor_2.setVelocity(motor_2_pwr * driveSpeed * motor_reduction * -1.0);
-        Motor_3.setVelocity(motor_3_pwr * driveSpeed * motor_reduction * -1.0);
-        Motor_4.setVelocity(motor_4_pwr * driveSpeed * motor_reduction * -1.0);
+        Motor_1.setVelocity(motor_1_pwr * driveSpeed * motor_reduction * harrisonDirection);//use setVelocity not setPower to use the encoder and run the robot with velocity (more accurate!!!)
+        Motor_2.setVelocity(motor_2_pwr * driveSpeed * motor_reduction * harrisonDirection);
+        Motor_3.setVelocity(motor_3_pwr * driveSpeed * motor_reduction * harrisonDirection);
+        Motor_4.setVelocity(motor_4_pwr * driveSpeed * motor_reduction * harrisonDirection);
         Motor_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//use these statements to run using encoder - NEEDED
         Motor_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Motor_3.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
