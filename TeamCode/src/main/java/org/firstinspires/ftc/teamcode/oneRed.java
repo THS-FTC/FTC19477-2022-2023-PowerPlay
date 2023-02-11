@@ -70,6 +70,8 @@ public class oneRed extends LinearOpMode {
     final int slideClearance = 3000;
     final float servoPole = 0.0F;
     final float servoPick = 300.0F;
+    final float clawOpen = 65.0F;
+    final float clawClose = 95.0F;
     double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
@@ -83,7 +85,7 @@ public class oneRed extends LinearOpMode {
     //ALL TIMES ARE IN MILLISECONDS
 
     //motor variables for mecanum drive
-    double motor_reduction = 0.35;//for drivetrain
+    double motor_reduction = 0.55;//for drivetrain
     double motor_1_pwr, motor_2_pwr, motor_3_pwr, motor_4_pwr = 0.0;//declare motor power variables
     double harrisonDirection = 1.0;
     double motor_denom;
@@ -189,7 +191,7 @@ public class oneRed extends LinearOpMode {
             getCone();//operate the slide to preset positions and rotate the intake
             //cam();//camera statistics
             claw();//operate the claw
-            telemetry.addData("arm", armMotor.getCurrentPosition());
+            //telemetry.addData("arm", armMotor.getCurrentPosition());
             telemetry.update();//send telemetry data to driver hub
             //DO NOT PUT A TELEMETRY UPDATE IN ANY OTHER FUNCTION PLEASE MAY GOD HELP YOU IF YOU DO
         }
@@ -254,13 +256,16 @@ public class oneRed extends LinearOpMode {
 
     void normal_motor(){//IT WORKS!
         //read controller inputs
-        right_stick1_x = -this.gamepad1.right_stick_x;
+        right_stick1_x = this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
         left_stick1_y = -this.gamepad1.left_stick_y;
-        right_bump1 = this.gamepad1.right_bumper;
+        right_trig1 = this.gamepad1.right_trigger;
 
-        if(right_bump1){
-            harrisonDirection = harrisonDirection * -1.0;
+        if(right_trig1 != 0.0){
+            harrisonDirection = -1.0;
+        }
+        else{
+            harrisonDirection = 1.0;
         }
 
         //drivetrain (somewhere you can learn more about the math to control the mecanum wheels - GOOGLE IT! IDK)
@@ -284,10 +289,10 @@ public class oneRed extends LinearOpMode {
         left_bump2 = this.gamepad2.left_bumper;
 
         if(right_bump2){
-            clawServo.setPosition(90.0/300.0);
+            clawServo.setPosition(clawClose/300.0);
         }
         else if(left_bump2){
-            clawServo.setPosition(50.0/300.0);
+            clawServo.setPosition(clawOpen/300.0);
         }
     }
 
