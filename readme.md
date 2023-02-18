@@ -1,5 +1,4 @@
 #FTC19477 2022-2023 PowerPlay
-Repo for FTC 19477
 
 Rules:
   When uploading code, put your name as the first word in the commit message. This is to keep a record of who changed what. Put a brief summary of what you changed.
