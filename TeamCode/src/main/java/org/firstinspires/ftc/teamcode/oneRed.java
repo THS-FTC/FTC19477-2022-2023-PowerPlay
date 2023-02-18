@@ -69,19 +69,23 @@ public class oneRed extends LinearOpMode {
     final int highJunction = 5575;//10500
     final int slideClearance = 3000;
     final float servoPole = 0.0F;
-    final float servoPick = 300.0F;
+    final float servoPick = 210.0F;
     final float clawOpen = 65.0F;
     final float clawClose = 95.0F;
     double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
-    float intakeServoTarget;
+    //float intakeServoTarget;
+    boolean claw = false;//TRUE = closed; FALSE = open (starting position)
+    boolean intake = false;//TRUE = pole position; FALSE = pickup (starting position)
     double minContourArea = 2500.0;//minimum area that a contour is counted as a "cone" and not useless
     //center coordinates have TOP LEFT corner as (0,0) - used for openCv contour center
     int centerColumn = 0;//"x" axis
     int centerRow = 0;//"y" axis
 
-    private ElapsedTime runTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize runTime Variable with millisecond unit
+    private ElapsedTime clawTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize clawTime Variable with millisecond unit
+    private ElapsedTime intakeTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize intakeTime Variable with millisecond unit
+
     //ALL TIMES ARE IN MILLISECONDS
 
     //motor variables for mecanum drive
@@ -98,10 +102,10 @@ public class oneRed extends LinearOpMode {
     Blinker Control_Hub;//NEEDED - DON'T DELETE!!
     DcMotorEx Motor_1, Motor_2, Motor_3, Motor_4, armMotor;//declare motors
     ServoImplEx intakeServo, clawServo;//declare servos
-    Gyroscope imu;
+    //Gyroscope imu;
     //USE SERVOIMPLEX (GM0)
     DistanceSensor frontDistance;
-    OpenCvWebcam webcam;
+    //OpenCvWebcam webcam;
 
     //inputs from controllers
     double left_stick2_x, left_stick2_y, right_stick2_x, right_stick2_y, left_stick1_y, right_stick1_x, left_stick1_x, right_stick1_y,
@@ -141,9 +145,10 @@ public class oneRed extends LinearOpMode {
         //telemetry.addData("armEncoder", armMotor.getCurrentPosition());
         //telemetry.addData("intake servo", intakeServo.getPosition());
         clawServo.setPosition(clawOpen/300.0);//"open" the claw servo
+        intakeServo.setPosition(servoPick/300.0);
 
         //initialize webcams
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        /*int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "intakeCam"), cameraMonitorViewId);
         webcam.setPipeline(new conePipeline());//tell the camera which image processing pipeline to send images to
         webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
@@ -168,7 +173,7 @@ public class oneRed extends LinearOpMode {
                  * For a rear facing camera or a webcam, rotation is defined assuming the camera is facing
                  * away from the user.
                  */
-                webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);//start getting frames from the camera
+             /*   webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);//start getting frames from the camera
             }
 
             @Override
@@ -177,11 +182,12 @@ public class oneRed extends LinearOpMode {
                 /*
                  * This will be called if the camera could not be opened
                  */
-            }
-        });
+            //}
+        //});
         slide(30);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
         telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
+        telemetry.addData("intake servo:", intakeServo.isPwmEnabled());
         telemetry.update();
         waitForStart();
 
@@ -190,9 +196,25 @@ public class oneRed extends LinearOpMode {
             normal_motor();////mecanum wheel motor control maths using encoder velocity control
             getCone();//operate the slide to preset positions and rotate the intake
             //cam();//camera statistics
-            claw();//operate the claw
+            right_bump2 = this.gamepad2.right_bumper;//right bumper: for the claw servo
+            if (right_bump2) {
+                if (clawTime.time() > 1000) {
+                    claw();//operate the claw
+                    clawTime.reset();
+                }
+            }
+            left_bump2 = this.gamepad2.left_bumper;//left bumper: for the intake servo
+            if (left_bump2){
+                if (intakeTime.time() > 1000){
+                    intake();//operate the intake servo
+                    intakeTime.reset();
+                }
+            }
+
+
             //telemetry.addData("arm", armMotor.getCurrentPosition());
             telemetry.addData("slide height: ", armMotor.getCurrentPosition());
+            telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
             telemetry.update();//send telemetry data to driver hub
             //DO NOT PUT A TELEMETRY UPDATE IN ANY OTHER FUNCTION PLEASE MAY GOD HELP YOU IF YOU DO
         }
@@ -203,10 +225,10 @@ public class oneRed extends LinearOpMode {
     //all custom functions
     void getCone(){
         //read controller inputs
-        left_trig2 = this.gamepad2.left_trigger;
-        right_trig2 = this.gamepad2.right_trigger;
-        Dup2 = this.gamepad2.dpad_up;
-        Ddown2 = this.gamepad2.dpad_down;
+        left_trig2 = this.gamepad2.left_trigger;//slide down
+        right_trig2 = this.gamepad2.right_trigger;//slide up
+        //Dup2 = this.gamepad2.dpad_up;
+        //Ddown2 = this.gamepad2.dpad_down;
         x2 = this.gamepad2.x;
         a2 = this.gamepad2.a;
         b2 = this.gamepad2.b;
@@ -225,15 +247,15 @@ public class oneRed extends LinearOpMode {
             }
         }
         //spin the servo to the right position as slide is going to preset position
-        if ((armMotor.getCurrentPosition() >= slideClearance) & (intakeServo.getPosition() != (intakeServoTarget/300.0))){
+        /*if ((armMotor.getCurrentPosition() >= slideClearance) & (intakeServo.getPosition() != (intakeServoTarget/300.0))){
             intakeServo.setPosition(intakeServoTarget/300.0);
-        }
+        }*/
 
         //execute preset slide heights if the buttons are pressed
         if (x2){
             armTarget = pickup;//armTarget needs to be re-defined as well, even tho not used, to make sure the manual triggers match with the current slide height.
             slide(pickup);
-            intakeServoTarget = servoPick;
+            //intakeServoTarget = servoPick;
         }
         else if(a2){
             armTarget = lowJunction;
@@ -243,19 +265,12 @@ public class oneRed extends LinearOpMode {
         else if(b2){
             armTarget = midJunction;
             slide(midJunction);
-            intakeServoTarget = servoPole;
+            //intakeServoTarget = servoPole;
         }
         else if(y2){
             armTarget = highJunction;
             slide(highJunction);
-            intakeServoTarget = servoPole;
-        }
-        //turn the intake servo 180 deg
-        if(Dup2){
-            intake(0);
-        }
-        else if (Ddown2){
-            intake(1);
+            //intakeServoTarget = servoPole;
         }
     }
 
@@ -290,15 +305,18 @@ public class oneRed extends LinearOpMode {
     }
 
     void claw(){//open/close claw
-        right_bump2 = this.gamepad2.right_bumper;
-        left_bump2 = this.gamepad2.left_bumper;
+        //right_bump2 = this.gamepad2.right_bumper;//right bumper: for the claw servo
+        if(right_bump2 && (clawServo.getPosition()*300.0 <= (clawOpen+1.0) || clawServo.getPosition()*300.0 >= (clawClose-1.0))) {
+            if (claw) {
+                clawServo.setPosition(clawOpen / 300.0);
+                claw = false;
+            } else if (!claw) {
+                clawServo.setPosition(clawClose / 300.0);
+                claw = true;
+            }
+        }
+        telemetry.addData("clawServo: ", clawServo.getPosition());
 
-        if(right_bump2){
-            clawServo.setPosition(clawClose/300.0);
-        }
-        else if(left_bump2){
-            clawServo.setPosition(clawOpen/300.0);
-        }
     }
 
     void slide(int target){//make slide move up/down using encoder values to calculate position
@@ -312,21 +330,26 @@ public class oneRed extends LinearOpMode {
         }
     }
 
-    void intake(int pos){//turn the entire intake mechanism around 180 degrees
-        if (armMotor.getCurrentPosition() >= slideClearance){//EVERYTHING GOOD
-            if(pos == 1){
-                intakeServo.setPosition(servoPole/300.0);
+    void intake(){//turn the entire intake mechanism around 180 degrees
+        if (left_bump2) {
+            if (armMotor.getCurrentPosition() >= slideClearance && (intakeServo.getPosition()*300.0 <= (servoPole+1.0) || intakeServo.getPosition()*300.0 >= (servoPick-1.0))) {//EVERYTHING GOOD
+                if (intake) {
+                    intakeServo.setPosition(servoPole / 300.0);
+                    intake = false;
+                }
+                else if (!intake) {
+                    intakeServo.setPosition(servoPick / 300.0);
+                    intake = true;
+                }
+                /*else if (pos == 2){
+                    slide(slideClearance);
+                    intakeServo.setPosition(servoPole/300.0);
+                }*/
             }
-            else if (pos == 0){
-                intakeServo.setPosition(servoPick/300.0);
-            }
-            /*else if (pos == 2){
+            else {
+                armTarget = slideClearance;
                 slide(slideClearance);
-                intakeServo.setPosition(servoPole/300.0);
-            }*/
-        }
-        else{
-            slide(slideClearance);
+            }
         }
     }
 
@@ -375,7 +398,7 @@ public class oneRed extends LinearOpMode {
         Motor_4.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    void cam(){
+    /*void cam(){
         telemetry.addData("Frame Count", webcam.getFrameCount());
         telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
         telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -406,9 +429,9 @@ public class oneRed extends LinearOpMode {
             //webcam.stopStreaming();
             //webcam.closeCameraDevice();
         //}
-    }
+    //}*/
 
-    double computePID(double input, double setPoint, int kp, int ki, int kd){
+    /*double computePID(double input, double setPoint, int kp, int ki, int kd){
         double currentTime = runTime.milliseconds();//get current time in MILLISECONDS
         double error;
         double cumError = 0;
@@ -426,9 +449,9 @@ public class oneRed extends LinearOpMode {
         previousTime = currentTime;                        //remember current time
 
         return out;                                        //have function return the PID output
-    }
+    }*/
 
-    double computePD(double input, double setPoint, int kp, int kd){
+    /*double computePD(double input, double setPoint, int kp, int kd){
         double currentTime = runTime.milliseconds();//get current time in MILLISECONDS
         double error;
         double cumError = 0;
@@ -445,7 +468,7 @@ public class oneRed extends LinearOpMode {
         previousTime = currentTime;                        //remember current time
 
         return out;                                        //have function return the PID output
-    }
+    }*/
 
     //cone detection processing pipeline
     class conePipeline extends OpenCvPipeline
@@ -533,7 +556,7 @@ public class oneRed extends LinearOpMode {
 
         }
 
-        @Override
+        /*@Override
         public void onViewportTapped()
         {
             /*
@@ -547,7 +570,7 @@ public class oneRed extends LinearOpMode {
              *
              * Here we demonstrate dynamically pausing/resuming the viewport when the user taps it
              */
-            viewportPaused = !viewportPaused;
+            /*viewportPaused = !viewportPaused;
 
             if(viewportPaused)
             {
@@ -556,8 +579,8 @@ public class oneRed extends LinearOpMode {
             else
             {
                 webcam.resumeViewport();
-            }
-        }
+            }*/
+        //}
     }
 }
 
