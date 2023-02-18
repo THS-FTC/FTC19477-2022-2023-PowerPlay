@@ -67,7 +67,7 @@ public class oneRed extends LinearOpMode {
     final int lowJunction = 2215;//4570
     final int midJunction = 3870;//7700
     final int highJunction = 5575;//10500
-    final int slideClearance = 3000;
+    final int slideClearance = 720;
     final float servoPole = 0.0F;
     final float servoPick = 210.0F;
     final float clawOpen = 65.0F;
@@ -91,7 +91,7 @@ public class oneRed extends LinearOpMode {
     //motor variables for mecanum drive
     double motor_reduction = 0.55;//for drivetrain
     double motor_1_pwr, motor_2_pwr, motor_3_pwr, motor_4_pwr = 0.0;//declare motor power variables
-    double harrisonDirection = 1.0;
+    double harrisonDirection = -1.0;
     double motor_denom;
 
     //PID variables
@@ -276,16 +276,23 @@ public class oneRed extends LinearOpMode {
 
     void normal_motor(){//IT WORKS!
         //read controller inputs
-        right_stick1_x = this.gamepad1.right_stick_x;
+        right_stick1_x = -this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
         left_stick1_y = -this.gamepad1.left_stick_y;
         right_bump1 = this.gamepad1.right_bumper;
 
         if(right_bump1){
-            harrisonDirection = -1.0;
+            harrisonDirection = 1.0;
         }
         else{
-            harrisonDirection = 1.0;
+            harrisonDirection = -1.0;
+        }
+
+        if (armMotor.getCurrentPosition() >= midJunction){
+            motor_reduction = 0.4;
+        }
+        else{
+            motor_reduction = 0.7;
         }
 
         //drivetrain (somewhere you can learn more about the math to control the mecanum wheels - GOOGLE IT! IDK)
