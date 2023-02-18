@@ -125,7 +125,7 @@ public class oneRed extends LinearOpMode {
         Motor_1.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_3.setDirection(DcMotorEx.Direction.REVERSE);
         Motor_2.setDirection(DcMotorEx.Direction.FORWARD);
-        Motor_4.setDirection(DcMotorEx.Direction.REVERSE);
+        Motor_4.setDirection(DcMotorEx.Direction.FORWARD);
         armMotor.setDirection(DcMotorEx.Direction.REVERSE);
         //set Servo maxRange [500, 2500] microseconds. Enables goBilda servos to get full 300º range
         intakeServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
@@ -140,7 +140,7 @@ public class oneRed extends LinearOpMode {
         armMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         //telemetry.addData("armEncoder", armMotor.getCurrentPosition());
         //telemetry.addData("intake servo", intakeServo.getPosition());
-        intakeServo.setPosition(servoPick/300.0);//"zero" the intake servo
+        clawServo.setPosition(clawOpen/300.0);//"open" the claw servo
 
         //initialize webcams
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -179,7 +179,7 @@ public class oneRed extends LinearOpMode {
                  */
             }
         });
-        slide(20);//move up slightly cuz there's a weird bug somewhere
+        slide(30);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
         telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
         telemetry.update();
@@ -192,6 +192,7 @@ public class oneRed extends LinearOpMode {
             //cam();//camera statistics
             claw();//operate the claw
             //telemetry.addData("arm", armMotor.getCurrentPosition());
+            telemetry.addData("slide height: ", armMotor.getCurrentPosition());
             telemetry.update();//send telemetry data to driver hub
             //DO NOT PUT A TELEMETRY UPDATE IN ANY OTHER FUNCTION PLEASE MAY GOD HELP YOU IF YOU DO
         }
@@ -230,18 +231,22 @@ public class oneRed extends LinearOpMode {
 
         //execute preset slide heights if the buttons are pressed
         if (x2){
+            armTarget = pickup;//armTarget needs to be re-defined as well, even tho not used, to make sure the manual triggers match with the current slide height.
             slide(pickup);
             intakeServoTarget = servoPick;
         }
         else if(a2){
+            armTarget = lowJunction;
             slide(lowJunction);
             //intakeServoTarget = servoPole;
         }
         else if(b2){
+            armTarget = midJunction;
             slide(midJunction);
             intakeServoTarget = servoPole;
         }
         else if(y2){
+            armTarget = highJunction;
             slide(highJunction);
             intakeServoTarget = servoPole;
         }
@@ -259,9 +264,9 @@ public class oneRed extends LinearOpMode {
         right_stick1_x = this.gamepad1.right_stick_x;
         left_stick1_x = this.gamepad1.left_stick_x;
         left_stick1_y = -this.gamepad1.left_stick_y;
-        right_trig1 = this.gamepad1.right_trigger;
+        right_bump1 = this.gamepad1.right_bumper;
 
-        if(right_trig1 != 0.0){
+        if(right_bump1){
             harrisonDirection = -1.0;
         }
         else{
