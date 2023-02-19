@@ -71,7 +71,7 @@ public class oneRed extends LinearOpMode {
     final float servoPole = 0.0F;
     final float servoPick = 213.0F;
     final float clawOpen = 65.0F;
-    final float clawClose = 95.0F;
+    final float clawClose = 105.0F;
     double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
