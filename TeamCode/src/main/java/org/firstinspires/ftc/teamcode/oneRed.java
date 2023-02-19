@@ -69,7 +69,7 @@ public class oneRed extends LinearOpMode {
     final int highJunction = 5575;//10500
     final int slideClearance = 720;
     final float servoPole = 0.0F;
-    final float servoPick = 210.0F;
+    final float servoPick = 213.0F;
     final float clawOpen = 65.0F;
     final float clawClose = 95.0F;
     double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
@@ -289,7 +289,7 @@ public class oneRed extends LinearOpMode {
         }
 
         if (armMotor.getCurrentPosition() >= midJunction){
-            motor_reduction = 0.4;
+            motor_reduction = 0.37;
         }
         else{
             motor_reduction = 0.7;
