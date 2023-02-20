@@ -94,6 +94,8 @@ public class oneRed extends LinearOpMode {
     double harrisonDirection = -1.0;
     double motor_denom;
 
+    int armPos;
+
     //PID variables
     double previousTime;
     double lastError = 0;
@@ -186,13 +188,12 @@ public class oneRed extends LinearOpMode {
         //});
         slide(30);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
-        telemetry.addData("intake servo:", intakeServo.isPwmEnabled());
         telemetry.update();
         waitForStart();
 
         //main loop: call functions that do different tasks
         while (opModeIsActive()) {
+            armPos = armMotor.getCurrentPosition();
             normal_motor();////mecanum wheel motor control maths using encoder velocity control
             getCone();//operate the slide to preset positions and rotate the intake
             //cam();//camera statistics
@@ -214,7 +215,6 @@ public class oneRed extends LinearOpMode {
 
             //telemetry.addData("arm", armMotor.getCurrentPosition());
             telemetry.addData("slide height: ", armMotor.getCurrentPosition());
-            telemetry.addData("intakeServo PWM Range: ", intakeServo.getPwmRange());
             telemetry.update();//send telemetry data to driver hub
             //DO NOT PUT A TELEMETRY UPDATE IN ANY OTHER FUNCTION PLEASE MAY GOD HELP YOU IF YOU DO
         }
@@ -227,8 +227,6 @@ public class oneRed extends LinearOpMode {
         //read controller inputs
         left_trig2 = this.gamepad2.left_trigger;//slide down
         right_trig2 = this.gamepad2.right_trigger;//slide up
-        //Dup2 = this.gamepad2.dpad_up;
-        //Ddown2 = this.gamepad2.dpad_down;
         x2 = this.gamepad2.x;
         a2 = this.gamepad2.a;
         b2 = this.gamepad2.b;
@@ -288,8 +286,8 @@ public class oneRed extends LinearOpMode {
             harrisonDirection = -1.0;
         }
 
-        if (armMotor.getCurrentPosition() >= midJunction){
-            motor_reduction = 0.37;
+        if (armPos >= midJunction){
+            motor_reduction = 0.35;
         }
         else{
             motor_reduction = 0.7;
@@ -313,7 +311,8 @@ public class oneRed extends LinearOpMode {
 
     void claw(){//open/close claw
         //right_bump2 = this.gamepad2.right_bumper;//right bumper: for the claw servo
-        if(right_bump2 && (clawServo.getPosition()*300.0 <= (clawOpen+1.0) || clawServo.getPosition()*300.0 >= (clawClose-1.0))) {
+        double clawPos = clawServo.getPosition();
+        if(right_bump2 && (clawPos*300.0 <= (clawOpen+1.0) || clawPos*300.0 >= (clawClose-1.0))) {
             if (claw) {
                 clawServo.setPosition(clawOpen / 300.0);
                 claw = false;
@@ -322,24 +321,25 @@ public class oneRed extends LinearOpMode {
                 claw = true;
             }
         }
-        telemetry.addData("clawServo: ", clawServo.getPosition());
+        telemetry.addData("clawServo: ", clawPos);
 
     }
 
     void slide(int target){//make slide move up/down using encoder values to calculate position
         armMotor.setTargetPosition(target);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        if(armTarget<armMotor.getCurrentPosition()){
+        if(armTarget<armPos){
             armMotor.setVelocity(slideSpeed*0.75);
         }
-        else if (armTarget>armMotor.getCurrentPosition()){
+        else if (armTarget>armPos){
             armMotor.setVelocity(slideSpeed*0.9);
         }
     }
 
     void intake(){//turn the entire intake mechanism around 180 degrees
         if (left_bump2) {
-            if (armMotor.getCurrentPosition() >= slideClearance && (intakeServo.getPosition()*300.0 <= (servoPole+1.0) || intakeServo.getPosition()*300.0 >= (servoPick-1.0))) {//EVERYTHING GOOD
+            double intakePos = intakeServo.getPosition();
+            if (armPos >= slideClearance && (intakePos*300.0 <= (servoPole+1.0) || intakePos*300.0 >= (servoPick-1.0))) {//EVERYTHING GOOD
                 if (intake) {
                     intakeServo.setPosition(servoPole / 300.0);
                     intake = false;

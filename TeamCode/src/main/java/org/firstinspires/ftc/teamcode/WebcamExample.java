@@ -1,6 +1,7 @@
 //import FTC packages and all needed libraries
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -27,7 +28,8 @@ import java.util.List;
 
 //hi
 
-@TeleOp//set mode to TeleOp (driver control)
+@TeleOp//set mode to TeleOp (driver control)\
+@Disabled
 public class WebcamExample extends LinearOpMode
 {
     //hardware definitions

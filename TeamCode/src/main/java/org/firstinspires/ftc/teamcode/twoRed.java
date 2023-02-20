@@ -40,7 +40,7 @@ import java.util.Date;
 //import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 //hi
 @TeleOp
-
+@Disabled
 public class twoRed extends LinearOpMode {
     //junction height values represented as motor encoder values for 4-stage Viper Slide Kit
     int groundJunction = 600;
