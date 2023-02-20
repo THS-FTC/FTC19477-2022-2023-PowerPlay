@@ -21,6 +21,7 @@
 //hi
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -44,6 +45,7 @@ import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
 @TeleOp
+@Disabled
 public class AprilTagsDemo extends LinearOpMode
 {
     OpenCvCamera camera;
