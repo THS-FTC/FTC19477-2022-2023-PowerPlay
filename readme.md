@@ -5,7 +5,7 @@ Rules:
 
 EasyOpenCV most used classes (javadocs): 
   https://docs.opencv.org/4.x/javadoc/org/opencv/imgproc/Imgproc.html
-  https://docs.opencv.org/4.x/javadoc/org/opencv/core/Core.html
+https://docs.opencv.org/4.x/javadoc/org/opencv/core/Core.html
   
 OpenFTC/EasyOpenCV Repo: https://github.com/OpenFTC/EasyOpenCV
 
