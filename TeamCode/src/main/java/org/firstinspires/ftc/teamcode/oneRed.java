@@ -64,15 +64,15 @@ public class oneRed extends LinearOpMode {
     //'final' means the variable cannot be changed later
     final int pickup = 3;
     final int groundJunction = 1025;
-    final int lowJunction = 2215;//4570
-    final int midJunction = 3870;//7700
-    final int highJunction = 5575;//10500
+    final int lowJunction = 1325;//4570
+    final int midJunction = 2135;//7700
+    final int highJunction = 3000;//10500
     final int slideClearance = 720;
     final float servoPole = 0.0F;
     final float servoPick = 213.0F;
     final float clawOpen = 65.0F;
     final float clawClose = 105.0F;
-    double slideSpeed = 2794.0;//2794 PP/S is max encoder PP/S of Gobilda 223 rpm motor
+    double slideSpeed = 2787.0;//2787.625 PP/S is max encoder PP/S of Gobilda 435 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
     int armTarget = 0;//as encoder values
     //float intakeServoTarget;
@@ -85,6 +85,7 @@ public class oneRed extends LinearOpMode {
 
     private ElapsedTime clawTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize clawTime Variable with millisecond unit
     private ElapsedTime intakeTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize intakeTime Variable with millisecond unit
+    private ElapsedTime cycleTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);//initialize intakeTime Variable with millisecond unit
 
     //ALL TIMES ARE IN MILLISECONDS
 
@@ -189,6 +190,7 @@ public class oneRed extends LinearOpMode {
         slide(30);//move up slightly cuz there's a weird bug somewhere
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+        cycleTime.reset();
         waitForStart();
 
         //main loop: call functions that do different tasks
@@ -214,9 +216,11 @@ public class oneRed extends LinearOpMode {
 
 
             //telemetry.addData("arm", armMotor.getCurrentPosition());
-            telemetry.addData("slide height: ", armMotor.getCurrentPosition());
+            telemetry.addData("slide height: ", armPos);
+            telemetry.addData("cycle time: ", cycleTime.time());
             telemetry.update();//send telemetry data to driver hub
             //DO NOT PUT A TELEMETRY UPDATE IN ANY OTHER FUNCTION PLEASE MAY GOD HELP YOU IF YOU DO
+            cycleTime.reset();
         }
     }
 
