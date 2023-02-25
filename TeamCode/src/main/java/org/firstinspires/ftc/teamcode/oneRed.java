@@ -66,11 +66,11 @@ public class oneRed extends LinearOpMode {
     final int groundJunction = 1025;
     final int lowJunction = 1325;//4570
     final int midJunction = 2135;//7700
-    final int highJunction = 3000;//10500
+    final int highJunction = 2850;//10500
     final int slideClearance = 720;
     final float servoPole = 0.0F;
     final float servoPick = 213.0F;
-    final float clawOpen = 65.0F;
+    final float clawOpen = 69.0F;
     final float clawClose = 105.0F;
     double slideSpeed = 2787.0;//2787.625 PP/S is max encoder PP/S of Gobilda 435 rpm motor
     double driveSpeed = 2796.0;//2796 PP/S is max encoder PP/S of GoBilda 312 rpm motor
@@ -332,12 +332,7 @@ public class oneRed extends LinearOpMode {
     void slide(int target){//make slide move up/down using encoder values to calculate position
         armMotor.setTargetPosition(target);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        if(armTarget<armPos){
-            armMotor.setVelocity(slideSpeed*0.75);
-        }
-        else if (armTarget>armPos){
-            armMotor.setVelocity(slideSpeed*0.9);
-        }
+        armMotor.setVelocity(slideSpeed);
     }
 
     void intake(){//turn the entire intake mechanism around 180 degrees
