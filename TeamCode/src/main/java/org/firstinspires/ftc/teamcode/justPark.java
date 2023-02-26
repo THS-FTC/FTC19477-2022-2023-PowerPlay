@@ -61,7 +61,8 @@ public class justPark extends LinearOpMode
     //Servo intakeServo;
     //CRServo wheelServo;
     //DistanceSensor frontDistance;
-    OpenCvWebcam camera;
+    OpenCvWebcam camera;//for april tag
+    OpenCvWebcam webcam;//for pole detection
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
     static final double FEET_PER_METER = 3.28084;
@@ -96,7 +97,6 @@ public class justPark extends LinearOpMode
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "intakeCam"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
-
         camera.setPipeline(aprilTagDetectionPipeline);
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
