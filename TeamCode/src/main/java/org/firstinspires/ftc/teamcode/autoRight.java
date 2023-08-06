@@ -239,7 +239,7 @@ public class autoRight extends LinearOpMode
 
                 for(AprilTagDetection detection : detections)
                 {
-
+//
                     tagID = detection.id;
                     x = detection.pose.x;
                     y = detection.pose.y;
