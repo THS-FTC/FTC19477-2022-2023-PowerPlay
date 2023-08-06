@@ -244,9 +244,9 @@ public class autoRight extends LinearOpMode
                     x = detection.pose.x;
                     y = detection.pose.y;
                     z = detection.pose.z;
-                    yaw = Math.toDegrees(detection.pose.yaw);
-                    pitch = Math.toDegrees(detection.pose.pitch);
-                    roll = Math.toDegrees(detection.pose.roll);
+                    //yaw = Math.toDegrees(detection.pose.yaw);
+                    //pitch = Math.toDegrees(detection.pose.pitch);
+                    //roll = Math.toDegrees(detection.pose.roll);
                     /*telemetry.addLine(String.format("\nDetected tag ID=%d", tagID));
                     telemetry.addLine(String.format("Translation X: %.2f meters", x));
                     telemetry.addLine(String.format("Translation Y: %.2f meters", y));
